@@ -1,0 +1,20 @@
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Training artifacts & TensorBoard
+runs/
+*.tfevents.*
+results/figures/*.png
+results/videos/*.mp4
+
+# Models checkpoint files (except final weights if needed)
+models/*/*.zip

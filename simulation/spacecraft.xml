@@ -1,0 +1,112 @@
+<mujoco model="LunarPilot_6DOF">
+    <compiler angle="degree" coordinate="local" inertiafromgeom="true"/>
+    
+    <option gravity="0 0 -1.622" timestep="0.01" integrator="RK4">
+        <flag warmstart="enable" contact="enable"/>
+    </option>
+
+    <visual>
+        <headlight ambient="0.3 0.3 0.35" diffuse="0.7 0.7 0.7" specular="0.2 0.2 0.2"/>
+        <map znear="0.05" zfar="150"/>
+        <rgba haze="0.05 0.05 0.08 1"/>
+        <global offwidth="1280" offheight="720"/>
+    </visual>
+
+    <asset>
+        <!-- Textures & Materials -->
+        <texture type="skybox" builtin="flat" rgb1="0.02 0.02 0.04" rgb2="0.02 0.02 0.04" width="256" height="256"/>
+        <texture type="2d" name="regolith_tex" builtin="checker" rgb1="0.22 0.22 0.23" rgb2="0.27 0.27 0.28" width="512" height="512"/>
+        <material name="lunar_surface_mat" texture="regolith_tex" texrepeat="20 20" reflectance="0.05" shininess="0.05" roughness="0.9"/>
+        
+        <material name="chassis_mat" rgba="0.9 0.88 0.85 1.0" reflectance="0.4" shininess="0.5"/>
+        <material name="foil_gold_mat" rgba="0.85 0.65 0.15 1.0" reflectance="0.7" shininess="0.8"/>
+        <material name="dark_metal_mat" rgba="0.2 0.2 0.22 1.0" reflectance="0.3" shininess="0.6"/>
+        <material name="nozzle_mat" rgba="0.15 0.15 0.18 1.0" reflectance="0.2" shininess="0.2"/>
+        <material name="footpad_mat" rgba="0.3 0.3 0.35 1.0" reflectance="0.1" shininess="0.1"/>
+        
+        <!-- Landing Pad Materials -->
+        <material name="target_ring_outer" rgba="0.3 0.3 0.35 1.0" reflectance="0.2"/>
+        <material name="target_ring_mid" rgba="0.2 0.2 0.25 1.0" reflectance="0.2"/>
+        <material name="target_bullseye" rgba="0.9 0.75 0.1 1.0" reflectance="0.3"/>
+    </asset>
+
+    <worldbody>
+        <!-- Directional Lunar Sunlight -->
+        <light directional="true" pos="10 10 25" dir="-0.3 -0.3 -1.0" diffuse="0.85 0.85 0.85" specular="0.3 0.3 0.3"/>
+
+        <!-- Lunar Ground Surface -->
+        <geom name="lunar_ground" type="plane" size="60 60 0.1" material="lunar_surface_mat"
+              friction="1.0 0.005 0.0001" solref="0.02 1.0" solimp="0.9 0.95 0.001"/>
+
+        <!-- Landing Target Bullseye Markers (centered at [0, 0, 0]) -->
+        <geom name="target_pad_outer" type="cylinder" pos="0 0 0.001" size="3.5 0.001" material="target_ring_outer" contype="0" conaffinity="0"/>
+        <geom name="target_pad_mid" type="cylinder" pos="0 0 0.002" size="2.0 0.001" material="target_ring_mid" contype="0" conaffinity="0"/>
+        <geom name="target_pad_inner" type="cylinder" pos="0 0 0.003" size="0.6 0.001" material="target_bullseye" contype="0" conaffinity="0"/>
+
+        <!-- 6-DOF Lander Body -->
+        <body name="lander" pos="0 0 10.0">
+            <!-- Freejoint provides the 6-DOF: (x, y, z, qw, qx, qy, qz) -->
+            <freejoint name="lander_freejoint"/>
+
+            <!-- Central Chassis (Avionics and Fuel Tanks) -->
+            <geom name="main_bus" type="cylinder" size="0.45 0.25" pos="0 0 0" 
+                  material="foil_gold_mat" density="65"/> <!-- approx 23 kg -->
+            <geom name="payload_top" type="cylinder" size="0.35 0.12" pos="0 0 0.37" 
+                  material="chassis_mat" density="80"/> <!-- approx 7.4 kg -->
+            
+            <!-- Main Engine Bell -->
+            <geom name="engine_bell" type="cylinder" size="0.18 0.10" pos="0 0 -0.35" 
+                  material="nozzle_mat" density="50"/> <!-- approx 1.0 kg -->
+
+            <!-- RCS Thruster Pods (Visual indicators for attitude control) -->
+            <geom name="rcs_px" type="box" size="0.06 0.06 0.06" pos="0.47 0 0.15" material="dark_metal_mat" density="40"/>
+            <geom name="rcs_nx" type="box" size="0.06 0.06 0.06" pos="-0.47 0 0.15" material="dark_metal_mat" density="40"/>
+            <geom name="rcs_py" type="box" size="0.06 0.06 0.06" pos="0 0.47 0.15" material="dark_metal_mat" density="40"/>
+            <geom name="rcs_ny" type="box" size="0.06 0.06 0.06" pos="0 -0.47 0.15" material="dark_metal_mat" density="40"/>
+
+            <!-- 4 Fixed Landing Legs & Footpads (Rigid, Engineering style) -->
+            <!-- Leg 1: +X, +Y -->
+            <geom name="strut_1" type="capsule" fromto="0.35 0.35 -0.15 0.65 0.65 -0.55" size="0.03" material="dark_metal_mat" density="40"/>
+            <geom name="foot_1" type="sphere" pos="0.65 0.65 -0.55" size="0.08" 
+                  material="footpad_mat" density="50" friction="1.2 0.01 0.001" solref="0.02 1.0" solimp="0.9 0.95 0.001"/>
+
+            <!-- Leg 2: -X, +Y -->
+            <geom name="strut_2" type="capsule" fromto="-0.35 0.35 -0.15 -0.65 0.65 -0.55" size="0.03" material="dark_metal_mat" density="40"/>
+            <geom name="foot_2" type="sphere" pos="-0.65 0.65 -0.55" size="0.08" 
+                  material="footpad_mat" density="50" friction="1.2 0.01 0.001" solref="0.02 1.0" solimp="0.9 0.95 0.001"/>
+
+            <!-- Leg 3: -X, -Y -->
+            <geom name="strut_3" type="capsule" fromto="-0.35 -0.35 -0.15 -0.65 -0.65 -0.55" size="0.03" material="dark_metal_mat" density="40"/>
+            <geom name="foot_3" type="sphere" pos="-0.65 -0.65 -0.55" size="0.08" 
+                  material="footpad_mat" density="50" friction="1.2 0.01 0.001" solref="0.02 1.0" solimp="0.9 0.95 0.001"/>
+
+            <!-- Leg 4: +X, -Y -->
+            <geom name="strut_4" type="capsule" fromto="0.35 -0.35 -0.15 0.65 -0.65 -0.55" size="0.03" material="dark_metal_mat" density="40"/>
+            <geom name="foot_4" type="sphere" pos="0.65 -0.65 -0.55" size="0.08" 
+                  material="footpad_mat" density="50" friction="1.2 0.01 0.001" solref="0.02 1.0" solimp="0.9 0.95 0.001"/>
+
+            <!-- Thrust Action Application Site (Located at bottom nozzle) -->
+            <!-- Local +Z points upward through the center of mass. Firing along +Z pushes spacecraft UP -->
+            <site name="thrust_site" pos="0 0 -0.45" size="0.04" rgba="1 0.5 0.1 0.8"/>
+            <site name="com_site" pos="0 0 0" size="0.03" rgba="0.2 0.8 0.2 0.5"/>
+
+            <!-- Footpad Contact Sites for Touch/Height Sensing -->
+            <site name="site_foot_1" pos="0.65 0.65 -0.55" size="0.02" rgba="0 1 0 0.5"/>
+            <site name="site_foot_2" pos="-0.65 0.65 -0.55" size="0.02" rgba="0 1 0 0.5"/>
+            <site name="site_foot_3" pos="-0.65 -0.65 -0.55" size="0.02" rgba="0 1 0 0.5"/>
+            <site name="site_foot_4" pos="0.65 -0.65 -0.55" size="0.02" rgba="0 1 0 0.5"/>
+        </body>
+    </worldbody>
+
+    <!-- Actuators: 1 Main Thruster (Force) + 3 Attitude RCS Thrusters (Torques) -->
+    <actuator>
+        <!-- Main Thruster: Force along Body +Z (0 to 220 N) -->
+        <motor name="main_thruster" site="thrust_site" gear="0 0 1 0 0 0" ctrlrange="0 220"/>
+        <!-- Attitude Roll Torque: Moment around Body X (-15 to 15 N*m) -->
+        <motor name="torque_roll" site="thrust_site" gear="0 0 0 1 0 0" ctrlrange="-15 15"/>
+        <!-- Attitude Pitch Torque: Moment around Body Y (-15 to 15 N*m) -->
+        <motor name="torque_pitch" site="thrust_site" gear="0 0 0 0 1 0" ctrlrange="-15 15"/>
+        <!-- Attitude Yaw Torque: Moment around Body Z (-10 to 10 N*m) -->
+        <motor name="torque_yaw" site="thrust_site" gear="0 0 0 0 0 1" ctrlrange="-10 10"/>
+    </actuator>
+</mujoco>
